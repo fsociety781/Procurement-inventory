@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model category {
+  id            Int     @id @default(autoincrement())
+  category String @db.VarChar(50)
+  detail_items        detail_items[]
+}
+
+model history {
+  id        Int            @id @default(autoincrement())
+  itemsId  Int
+  reason String            @default("Pengajuan anda telah di setujui") @db.VarChar(50)
+  createdAt DateTime       @default(now()) @db.Timestamp(0)
+  items     items          @relation(fields: [itemsId], references: [id], map: "History_items_id_fkey")
+
+  @@index([itemsId], map: "History_items_id_fkey")
+}
+
+model detail_items {
+  id          Int          @id @default(autoincrement())
+  categoryId Int
+  name        String       @db.VarChar(100)
+  quantity    Int
+  description String       @db.VarChar(225)
+  url         String       @db.VarChar(100)
+  price       Float
+  total       Float
+  duedate     DateTime
+  items     items[]
+  category    category     @relation(fields: [categoryId], references: [id], map: "Items_category_id_fkey")
+  
+
+  @@index([categoryId], map: "Items_category_id_fkey")
+}
+
+model items {
+   id          Int          @id @default(autoincrement())
+   detailId    Int
+   userId     Int
+   status      items_status @default(onprocess)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  history     history[]
+  detailItems        detail_items         @relation(fields: [detailId], references: [id], map: "Items_detailId_fkey")
+  user        user         @relation(fields: [userId], references: [id], map: "Items_userId_fkey")
+   
+   @@index([detailId], map: "detailId_user_id_fkey")
+    @@index([userId], map: "Items_user_id_fkey")
+}
+
+
+model user {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  nik     String    @db.VarChar(50)
+  phone   String @db.VarChar(20)
+  address String @db.VarChar(225)
+  username  String   @unique @db.VarChar(20)
+  email     String   @unique @db.VarChar(50)
+  password  String
+  role      user_role @default(member)
+  is_active Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  items     items[]
+}
+
+model acces {
+  id Int @id @default(autoincrement())
+  userId Int
+  name String @db.VarChar(20)
+  token String  @db.Text()
+}
+
+
+enum user_role {
+  admin
+  member
+}
+
+enum items_status {
+  onprocess
+  approve
+  reject
+}

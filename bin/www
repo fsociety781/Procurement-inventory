@@ -1,0 +1,111 @@
+const { PassThrough } = require("stream");
+const app = require("../app");
+const debug = require("debug")("procurement-inventory2:server");
+const http = require("http");
+const { hashSync, genSaltSync } = require("bcrypt");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
+const port = normalizePort(process.env.PORT || "8000");
+app.set("port", port);
+
+const server = http.createServer(app);
+
+server.listen(port, async () => {
+  console.log(`server is listening on port ${port}`);
+  try {
+    const adminUser = await prisma.user.findFirst({
+      where: {
+        role: "admin",
+      },
+    });
+
+    const category = await prisma.category.findFirst({});
+
+    if (!category) {
+      await prisma.category.createMany({
+        data: [
+          {
+            category: "Barang",
+          },
+          {
+            category: "Akomodasi",
+          },
+          {
+            category: "Lainnya",
+          },
+        ],
+      });
+      console.log("Category is created");
+    }
+    if (!adminUser) {
+      const salt = genSaltSync(10);
+      await prisma.user.create({
+        data: {
+          name: "admin",
+          nik: "",
+          phone: "",
+          address: "",
+          username: "admin",
+          email: "4dmin.procurement@gmail.com",
+          password: hashSync("admin", salt),
+          role: "admin",
+        },
+      });
+      console.log("admin user account created");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+server.on("error", onError);
+server.on("listening", onListening);
+
+function normalizePort(val) {
+  const port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+function onError(error) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  const addr = server.address();
+  const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+  debug("Listening on " + bind);
+}
