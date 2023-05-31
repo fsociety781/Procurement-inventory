@@ -66,7 +66,7 @@ admin.get(
 );
 
 admin.get(
-  "/admin/procurement/:status",
+  "/admin/procurement/status/:status",
   AuthMiddleware,
   adminMiddleware,
   ProcurementController.getItemStatus
