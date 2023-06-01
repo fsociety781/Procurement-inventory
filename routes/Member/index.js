@@ -6,25 +6,20 @@ const AuthMiddleware = require("../../middleware/authMiddleware");
 const ProcurementController = require("../../controller/Member/ProcurementController");
 const DashBoaradController = require("../../controller/Member/DashboardController");
 
-member.get(
-  "/member",
-
-  AuthMiddleware,
-  DashBoaradController.index
-);
+member.get("/member", AuthMiddleware, DashBoaradController.index);
 member.get("/member/profile", AuthMiddleware, ProcurementController.getProfile);
 member.get(
   "/member/procurement",
   AuthMiddleware,
   ProcurementController.getItems
 );
-// member.get(
-//   "/member/procurement/:id",
-//   AuthMiddleware,
-//   ProcurementController.getItemId
-// );
 member.get(
-  "/member/procurement/:status",
+  "/member/procurement/:id",
+  AuthMiddleware,
+  ProcurementController.getItemId
+);
+member.get(
+  "/member/procurement/status/:status",
   AuthMiddleware,
   ProcurementController.getItemStatus
 );

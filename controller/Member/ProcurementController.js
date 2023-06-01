@@ -184,51 +184,66 @@ class ProcurementController {
     }
   }
 
-  // static async getItemId(req, res) {
-  //   try {
-  //     const id = req.params.id;
-  //     const { id: user_id } = req.user;
+  static async getItemId(req, res) {
+    try {
+      let { id } = req.params;
 
-  //     if (!id || isNaN(id)) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: "id is required",
-  //       });
-  //     }
+      id = parseInt(id);
 
-  //     const item = await prisma.items.findFirst({
-  //       where: { id, user_id },
-  //       attributes: { exclude: ["user_id"] },
-  //       include: {
-  //         model: User,
-  //         as: "user",
-  //         attributes: { exclude: ["password"] },
-  //       },
-  //     });
+      if (!id) {
+        return res.status(400).json({
+          status: "400",
+          message: "ID params must be filled",
+        });
+      }
 
-  //     if (item.user_id !== req.user.id) {
-  //       return res.status(403).json({
-  //         status: "403",
-  //         message: "You don't have accesss to this items",
-  //       });
-  //     }
+      const item = await prisma.items.findUnique({
+        where: {
+          id: id,
+        },
+        include: {
+          detailItems: {
+            select: {
+              name: true,
+              url: true,
+              description: true,
+              categoryId: true,
+              quantity: true,
+              price: true,
+              total: true,
+              duedate: true,
+            },
+          },
+          history: {
+            select: {
+              reason: true,
+            },
+          },
+        },
+      });
 
-  //     if (!item) {
-  //       return res.status(404).json({
-  //         success: false,
-  //         message: "item not found",
-  //       });
-  //     }
+      if (!item) {
+        return res.status(404).json({
+          status: "404",
+          message: "Item not found",
+        });
+      }
 
-  //     return res.status(200).json({
-  //       success: true,
-  //       message: "get item member by id",
-  //       item,
-  //     });
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json(error);
-  //   }
-  // }
+      if (item.userId !== req.user.id) {
+        return res.status(403).json({
+          status: "403",
+          message: "You don't have accesss to this items",
+        });
+      }
+
+      return res.status(200).json({
+        status: "200",
+        data: item,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
 }
 module.exports = ProcurementController;
