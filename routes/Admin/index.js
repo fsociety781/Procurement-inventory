@@ -59,17 +59,17 @@ admin.get(
 );
 
 admin.get(
-  "/admin/procurement/:id",
+  "/admin/procurement/search",
   AuthMiddleware,
   adminMiddleware,
   ProcurementController.getAllItems
 );
 
 admin.get(
-  "/admin/procurement/status/:status",
+  "/admin/procurement/:id",
   AuthMiddleware,
   adminMiddleware,
-  ProcurementController.getItemStatus
+  ProcurementController.getIteId
 );
 admin.patch(
   "/admin/procurement/:id",

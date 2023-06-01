@@ -4,6 +4,73 @@ const nodemailer = require("nodemailer");
 class ItemsController {
   static async getAllItems(req, res, next) {
     try {
+      const { search, page } = req.query;
+      const limit = 10; // Jumlah data per halaman
+      const offset = (page - 0) * limit;
+
+      let whereCondition = {};
+
+      if (search) {
+        whereCondition = {
+          detailItems: {
+            name: {
+              contains: search,
+            },
+          },
+        };
+      }
+
+      const totalCount = await prisma.items.count({
+        where: whereCondition,
+      });
+
+      const items = await prisma.items.findMany({
+        where: whereCondition,
+        include: {
+          detailItems: {
+            select: {
+              name: true,
+              url: true,
+              description: true,
+              categoryId: true,
+              quantity: true,
+              price: true,
+              total: true,
+              duedate: true,
+            },
+          },
+          history: {
+            select: {
+              reason: true,
+            },
+          },
+        },
+        take: limit,
+        skip: offset,
+      });
+      if (Object.keys(items).length === 0) {
+        return res.status(200).json({
+          status: "204",
+          message: "No item found",
+        });
+      } else {
+        return res.status(200).json({
+          status: true,
+          message: "Succes Get all procurement item",
+          data: items,
+          page: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+
+  static async getIteId(req, res, next) {
+    try {
       let { id } = req.params;
       id = parseInt(id);
 
@@ -12,6 +79,25 @@ class ItemsController {
           where: {
             id: id,
           },
+          include: {
+            detailItems: {
+              select: {
+                name: true,
+                url: true,
+                description: true,
+                categoryId: true,
+                quantity: true,
+                price: true,
+                total: true,
+                duedate: true,
+              },
+            },
+            history: {
+              select: {
+                reason: true,
+              },
+            },
+          },
         });
         return res.status(200).json({
           status: true,
@@ -19,97 +105,6 @@ class ItemsController {
           data: item,
         });
       }
-
-      const items = await prisma.items.findMany({
-        include: {
-          detailItems: {
-            select: {
-              name: true,
-              url: true,
-              description: true,
-              categoryId: true,
-              quantity: true,
-              price: true,
-              total: true,
-              duedate: true,
-            },
-          },
-          history: {
-            select: {
-              reason: true,
-            },
-          },
-        },
-      });
-
-      if (Object.keys(items).length === 0) {
-        return res.status(200).json({
-          status: "204",
-          message: "No item found",
-        });
-      } else
-        return res.status(200).json({
-          status: true,
-          message: "Succes Get all procurement item",
-          data: items,
-        });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-
-  static async getItemStatus(req, res, next) {
-    try {
-      const { status } = req.params;
-      if (
-        status !== "onprocess" &&
-        status !== "approve" &&
-        status !== "reject"
-      ) {
-        return res.status(404).json({
-          status: "404",
-          message: "Only choose available status: onprocess, approve, reject",
-        });
-      }
-
-      const items = await prisma.items.findMany({
-        where: {
-          status: status,
-        },
-        include: {
-          detailItems: {
-            select: {
-              name: true,
-              url: true,
-              description: true,
-              categoryId: true,
-              quantity: true,
-              price: true,
-              total: true,
-              duedate: true,
-            },
-          },
-          history: {
-            select: {
-              reason: true,
-            },
-          },
-        },
-      });
-
-      if (Object.keys(items).length === 0) {
-        return res.status(200).json({
-          status: "204",
-          message: "No items found with status " + status,
-        });
-      }
-
-      return res.status(200).json({
-        status: "200",
-        message: `get all data procurement with filter status = ${status}`,
-        data: items,
-      });
     } catch (error) {
       console.log(error);
       res.status(500).json(error);

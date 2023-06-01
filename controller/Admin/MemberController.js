@@ -4,45 +4,30 @@ const { hashSync, genSaltSync, compareSync, hash } = require("bcrypt");
 class MemberController {
   static async getMembers(req, res) {
     try {
-      const { search } = req.query;
+      const { search, page } = req.query;
+      const limit = 10; // Jumlah data per halaman
+      const offset = (page - 0) * limit;
+
+      // Menyiapkan kondisi pencarian
+      let whereCondition = {
+        role: "member",
+        is_active: true,
+      };
+
       if (search) {
-        const members = await prisma.user.findMany({
-          where: {
-            role: "member",
-            is_active: true,
-            OR: [
-              { name: { contains: search } },
-              { email: { contains: search } },
-              { username: { contains: search } },
-            ],
-          },
-          select: {
-            name: true,
-            nik: true,
-            phone: true,
-            address: true,
-            username: true,
-            email: true,
-          },
-        });
-        if (members.length === 0) {
-          return res.status(204).json({
-            message: "No members found",
-          });
-        } else {
-          return res.status(200).json({
-            success: true,
-            message: "Get Members By Search ",
-            data: members,
-          });
-        }
+        whereCondition = {
+          ...whereCondition,
+          OR: [
+            { name: { contains: search } },
+            { email: { contains: search } },
+            { username: { contains: search } },
+          ],
+        };
       }
 
-      const member = await prisma.user.findMany({
-        where: {
-          role: "member",
-          is_active: true,
-        },
+      // Mengambil data dengan kondisi pencarian dan paginasi
+      const members = await prisma.user.findMany({
+        where: whereCondition,
         select: {
           name: true,
           nik: true,
@@ -51,17 +36,27 @@ class MemberController {
           username: true,
           email: true,
         },
+        take: limit,
+        skip: offset,
       });
 
-      if (member.length === 0) {
+      // Menentukan respons berdasarkan hasil query
+      if (members.length === 0) {
         return res.status(204).json({
           message: "No members found",
         });
       } else {
+        // Menghitung total data untuk paginasi
+        const totalCount = await prisma.user.count({ where: whereCondition });
+        const totalPages = Math.ceil(totalCount / limit);
+
         return res.status(200).json({
           success: true,
-          message: "Get all members",
-          data: member,
+          message: "Get Members",
+          data: members,
+          page: parseInt(page),
+          totalPages,
+          totalCount,
         });
       }
     } catch (error) {
@@ -83,6 +78,7 @@ class MemberController {
           name: true,
           nik: true,
           phone: true,
+          address: true,
           username: true,
           email: true,
         },

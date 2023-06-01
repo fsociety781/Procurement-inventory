@@ -2,8 +2,9 @@ const prisma = require("../../bin/prisma");
 
 class DashboardController {
   static async index(req, res) {
-    const { filter } = req.query;
-
+    const { filter, page } = req.query;
+    const limit = 10; // Jumlah data per halaman
+    const offset = (page - 0) * limit;
     let startDate, endDate;
 
     // Filter berdasarkan per minggu
@@ -75,7 +76,8 @@ class DashboardController {
         orderBy: {
           createdAt: "desc",
         },
-        take: 5,
+        take: limit,
+        skip: offset,
         include: {
           detailItems: {
             select: {
@@ -102,6 +104,7 @@ class DashboardController {
           rejected: rejected,
         },
         lastRequest,
+        page: parseInt(page),
       });
     } catch (error) {
       console.log(error);

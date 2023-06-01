@@ -26,10 +26,25 @@ class ProcurementController {
 
   static async getItems(req, res) {
     try {
+      const { search, page } = req.query;
+      const limit = 10; // Jumlah data per halaman
+      const offset = (page - 0) * limit;
+
+      let whereCondition = {
+        userId: req.user.id,
+      };
+      if (search) {
+        whereCondition.detailItems = {
+          name: {
+            contains: search,
+          },
+        };
+      }
+      const totalCount = await prisma.items.count({
+        where: whereCondition,
+      });
       const items = await prisma.items.findMany({
-        where: {
-          userId: req.user.id,
-        },
+        where: whereCondition,
         include: {
           detailItems: {
             select: {
@@ -49,20 +64,23 @@ class ProcurementController {
             },
           },
         },
+        take: limit,
+        skip: offset,
       });
-
       if (Object.keys(items).length === 0) {
         return res.status(200).json({
           status: "204",
-          message: "You don't have any procurement item yet",
-        });
-      } else {
-        return res.status(200).json({
-          status: "200",
-          message: "Succes Get all procurement item",
-          data: items,
+          message: "No items found with name " + search,
         });
       }
+      return res.status(200).json({
+        status: "200",
+        message: "Succes Get all procurement item",
+        data: items,
+        page: parseInt(page),
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+      });
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
