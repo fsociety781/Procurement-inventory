@@ -4,13 +4,30 @@ const nodemailer = require("nodemailer");
 class ItemsController {
   static async getAllItems(req, res, next) {
     try {
-      const { search, page } = req.query;
+      // const { search, page } = req.query;
+      const { search, categoryId, status } = req.query;
+      const page = req.query.page || 0;
       const limit = 10; // Jumlah data per halaman
       const offset = (page - 0) * limit;
+      const allowedStatus = ["onprocess", "approve", "reject"];
 
       let whereCondition = {};
+      let statusCondition = "get all";
+      console.log(allowedStatus.indexOf(status) > -1);
+      if (search && categoryId) {
+        whereCondition = {
+          detailItems: {
+            name: {
+              contains: search,
+            },
+            categoryId: {
+              equals: parseInt(categoryId),
+            },
+          },
+        };
 
-      if (search) {
+        statusCondition = "search and category";
+      } else if (search) {
         whereCondition = {
           detailItems: {
             name: {
@@ -18,11 +35,27 @@ class ItemsController {
             },
           },
         };
-      }
 
-      const totalCount = await prisma.items.count({
-        where: whereCondition,
-      });
+        statusCondition = "search";
+      } else if (categoryId) {
+        whereCondition = {
+          detailItems: {
+            categoryId: {
+              equals: parseInt(categoryId),
+            },
+          },
+        };
+
+        statusCondition = "category";
+      } else if (status && allowedStatus.indexOf(status) > -1) {
+        whereCondition = {
+          status: {
+            equals: status,
+          },
+        };
+
+        statusCondition = "status";
+      }
 
       const items = await prisma.items.findMany({
         where: whereCondition,
@@ -48,6 +81,10 @@ class ItemsController {
         take: limit,
         skip: offset,
       });
+
+      const totalCount = items.length;
+      console.log(items.length);
+
       if (Object.keys(items).length === 0) {
         return res.status(200).json({
           status: "204",
@@ -56,7 +93,7 @@ class ItemsController {
       } else {
         return res.status(200).json({
           status: true,
-          message: "Succes Get all procurement item",
+          message: `Succes ${statusCondition}`,
           data: items,
           page: parseInt(page),
           totalPages: Math.ceil(totalCount / limit),
