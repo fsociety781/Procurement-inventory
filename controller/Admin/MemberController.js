@@ -5,6 +5,7 @@ class MemberController {
   static async getMembers(req, res) {
     try {
       const { search, page } = req.query;
+      page = req.query.page || 0;
       const limit = 10; // Jumlah data per halaman
       const offset = (page - 0) * limit;
 
