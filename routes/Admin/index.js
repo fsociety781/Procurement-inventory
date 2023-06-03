@@ -18,13 +18,6 @@ admin.get(
 );
 
 admin.get(
-  "/admin/member/search",
-  AuthMiddleware,
-  adminMiddleware,
-  MemberController.getMembers
-);
-
-admin.get(
   "/admin/member/:id",
   AuthMiddleware,
   adminMiddleware,
@@ -53,13 +46,6 @@ admin.delete(
 //Router admin untuk memanipulasi data Item Pengajuan
 admin.get(
   "/admin/procurement",
-  AuthMiddleware,
-  adminMiddleware,
-  ProcurementController.getAllItems
-);
-
-admin.get(
-  "/admin/procurement/search",
   AuthMiddleware,
   adminMiddleware,
   ProcurementController.getAllItems

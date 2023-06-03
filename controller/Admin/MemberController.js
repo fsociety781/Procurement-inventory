@@ -4,8 +4,8 @@ const { hashSync, genSaltSync, compareSync, hash } = require("bcrypt");
 class MemberController {
   static async getMembers(req, res) {
     try {
-      const { search, page } = req.query;
-      page = req.query.page || 0;
+      const { search } = req.query;
+      const page = req.query.page || 0;
       const limit = 10; // Jumlah data per halaman
       const offset = (page - 0) * limit;
 
@@ -252,7 +252,14 @@ class MemberController {
       return res.status(201).json({
         status: "201",
         message: "Member account has succesfully updated",
-        data: updatedMember,
+        data: {
+          name: updatedMember.name,
+          nik: updatedMember.nik,
+          phone: updatedMember.phone,
+          address: updatedMember.address,
+          email: updatedMember.email,
+          username: updatedMember.username,
+        },
       });
     } catch (error) {
       console.log(error);

@@ -2,8 +2,8 @@ const prisma = require("../../bin/prisma");
 
 class DashboardController {
   static async index(req, res) {
-    const { filter, page } = req.query;
-    page = req.query.page || 0;
+    const { filter } = req.query;
+    const page = req.query.page || 0;
     const limit = 10; // Jumlah data per halaman
     const offset = (page - 0) * limit;
     let startDate, endDate;

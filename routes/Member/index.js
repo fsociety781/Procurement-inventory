@@ -15,21 +15,11 @@ member.get(
 );
 
 member.get(
-  "/member/procurement/search",
-  AuthMiddleware,
-  ProcurementController.getItems
-);
-
-member.get(
   "/member/procurement/:id",
   AuthMiddleware,
   ProcurementController.getItemId
 );
-// member.get(
-//   "/member/procurement/status/:status",
-//   AuthMiddleware,
-//   ProcurementController.getItemStatus
-// );
+
 member.post(
   "/member/procurement",
   AuthMiddleware,

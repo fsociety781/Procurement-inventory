@@ -16,7 +16,14 @@ class ProcurementController {
 
       return res.status(200).json({
         status: "200",
-        data: data,
+        data: {
+          name: data.name,
+          nik: data.nik,
+          phone: data.phone,
+          address: data.address,
+          email: data.email,
+          username: data.username,
+        },
       });
     } catch (error) {
       console.log(error);
@@ -26,24 +33,50 @@ class ProcurementController {
 
   static async getItems(req, res) {
     try {
-      const { search, page } = req.query;
-      page = req.query.page || 0;
+      const { search, categoryId, status } = req.query;
+      const page = req.query.page || 0;
       const limit = 10; // Jumlah data per halaman
       const offset = (page - 0) * limit;
+      const allowedStatus = ["onprocess", "approve", "reject"];
 
-      let whereCondition = {
+      const whereCondition = {
         userId: req.user.id,
       };
-      if (search) {
+      let statusCondition = "get all";
+      if (search && categoryId) {
+        whereCondition.detailItems = {
+          name: {
+            constains: search,
+          },
+          categoryId: {
+            equals: parseInt(categoryId),
+          },
+        };
+        statusCondition = "search and category";
+      } else if (search) {
         whereCondition.detailItems = {
           name: {
             contains: search,
           },
         };
+
+        statusCondition = "search";
+      } else if (categoryId) {
+        whereCondition.detailItems = {
+          categoryId: {
+            equals: parseInt(categoryId),
+          },
+        };
+
+        statusCondition = "category";
+      } else if (status && allowedStatus.indexOf(status) > -1) {
+        whereCondition.detailItems = {
+          equals: status,
+        };
+
+        statusCondition = "status";
       }
-      const totalCount = await prisma.items.count({
-        where: whereCondition,
-      });
+
       const items = await prisma.items.findMany({
         where: whereCondition,
         include: {
@@ -68,79 +101,25 @@ class ProcurementController {
         take: limit,
         skip: offset,
       });
-      if (Object.keys(items).length === 0) {
-        return res.status(200).json({
-          status: "204",
-          message: "No items found with name " + search,
-        });
-      }
-      return res.status(200).json({
-        status: "200",
-        message: "Succes Get all procurement item",
-        data: items,
-        page: parseInt(page),
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
 
-  static async getItemStatus(req, res) {
-    try {
-      const { status } = req.params;
-
-      if (
-        status !== "onprocess" &&
-        status !== "approve" &&
-        status !== "reject"
-      ) {
-        return res.status(404).json({
-          status: "404",
-          message: "Only choose available status: onprocess, approve, reject",
-        });
-      }
-
-      const items = await prisma.items.findMany({
-        where: {
-          userId: req.user.id,
-          status: status,
-        },
-        include: {
-          detailItems: {
-            select: {
-              name: true,
-              url: true,
-              description: true,
-              categoryId: true,
-              quantity: true,
-              price: true,
-              total: true,
-              duedate: true,
-            },
-          },
-          history: {
-            select: {
-              reason: true,
-            },
-          },
-        },
-      });
+      const totalCount = items.length;
+      console.log(items.length);
 
       if (Object.keys(items).length === 0) {
         return res.status(200).json({
           status: "204",
-          message: "No items found with status " + status,
+          message: "No item found",
+        });
+      } else {
+        return res.status(200).json({
+          status: true,
+          message: `Succes ${statusCondition}`,
+          data: items,
+          page: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
         });
       }
-
-      return res.status(200).json({
-        success: true,
-        message: `get all data procurement with filter status = ${status}`,
-        items,
-      });
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
