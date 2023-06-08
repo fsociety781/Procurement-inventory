@@ -96,6 +96,15 @@ class DashboardController {
         },
       });
 
+      let filterMessage = "";
+      if (filter === "perminggu") {
+        filterMessage = "Data terfilter untuk satu minggu terakhir";
+      } else if (filter === "perbulan") {
+        filterMessage = "Data terfilter untuk satu bulan terakhir";
+      } else if (filter === "pertahun") {
+        filterMessage = "Data terfilter untuk satu tahun terakhir";
+      }
+
       return res.status(200).json({
         success: true,
         message: "get data for dashboard",
@@ -109,6 +118,7 @@ class DashboardController {
           lastRequest,
         },
         page: parseInt(page),
+        filter: filterMessage,
       });
     } catch (error) {
       console.log(error);

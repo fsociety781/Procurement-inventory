@@ -162,7 +162,6 @@ class MemberController {
           password: hashSync(password, salt),
         },
       });
-      console.log(member);
 
       return res.status(201).json({
         status: 200,
@@ -227,8 +226,8 @@ class MemberController {
       });
 
       if (checkEmail || checkUsername) {
-        return res.status(200).json({
-          status: "200",
+        return res.status(400).json({
+          status: "400",
           message: "Username/email has been taken",
         });
       }

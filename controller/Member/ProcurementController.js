@@ -39,39 +39,55 @@ class ProcurementController {
       const offset = (page - 0) * limit;
       const allowedStatus = ["onprocess", "approve", "reject"];
 
-      const whereCondition = {
+      let whereCondition = {
         userId: req.user.id,
       };
       let statusCondition = "get all";
+
+      console.log(allowedStatus.indexOf(status) > -1);
+
       if (search && categoryId) {
-        whereCondition.detailItems = {
-          name: {
-            constains: search,
-          },
-          categoryId: {
-            equals: parseInt(categoryId),
+        whereCondition = {
+          ...whereCondition,
+          detailItems: {
+            name: {
+              contains: search,
+            },
+            categoryId: {
+              equals: parseInt(categoryId),
+            },
           },
         };
+
         statusCondition = "search and category";
       } else if (search) {
-        whereCondition.detailItems = {
-          name: {
-            contains: search,
+        whereCondition = {
+          ...whereCondition,
+          detailItems: {
+            name: {
+              contains: search,
+            },
           },
         };
 
         statusCondition = "search";
       } else if (categoryId) {
-        whereCondition.detailItems = {
-          categoryId: {
-            equals: parseInt(categoryId),
+        whereCondition = {
+          ...whereCondition,
+          detailItems: {
+            categoryId: {
+              equals: parseInt(categoryId),
+            },
           },
         };
 
         statusCondition = "category";
       } else if (status && allowedStatus.indexOf(status) > -1) {
-        whereCondition.detailItems = {
-          equals: status,
+        whereCondition = {
+          ...whereCondition,
+          status: {
+            equals: status,
+          },
         };
 
         statusCondition = "status";
@@ -105,7 +121,7 @@ class ProcurementController {
       const totalCount = items.length;
       console.log(items.length);
 
-      if (Object.keys(items).length === 0) {
+      if (items.length === 0) {
         return res.status(200).json({
           status: "204",
           message: "No item found",
@@ -113,7 +129,7 @@ class ProcurementController {
       } else {
         return res.status(200).json({
           status: true,
-          message: `Succes ${statusCondition}`,
+          message: `Success ${statusCondition}`,
           data: items,
           page: parseInt(page),
           totalPages: Math.ceil(totalCount / limit),

@@ -37,10 +37,18 @@ class AuthController {
         },
       });
 
-      if (!users || !compareSync(password, users.password)) {
+      if (!users) {
         return res.status(404).json({
           status: "404",
           message: "Your account has been deactivated",
+        });
+      }
+      const passwordMatch = compareSync(password, users.password);
+
+      if (!passwordMatch) {
+        return res.status(401).json({
+          status: "401",
+          message: "Incorrect username or password",
         });
       } else {
         const token = jwt.sign(
