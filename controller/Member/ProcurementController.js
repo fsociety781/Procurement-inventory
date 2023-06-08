@@ -44,8 +44,6 @@ class ProcurementController {
       };
       let statusCondition = "get all";
 
-      console.log(allowedStatus.indexOf(status) > -1);
-
       if (search && categoryId) {
         whereCondition = {
           ...whereCondition,
